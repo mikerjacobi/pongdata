@@ -11,7 +11,7 @@ db = conn['ping']['pong']
 #SELECT: list(db.find({'_id':ObjectId(game_id)}))[0]
 #UDPATE: db.update({'_id':ObjectId(game_id)},{'$inc':{player:1},'$push':{'history':player}})
 #INSERT: db.insert({})
-
+"""
 def create_game(player1, player2):
     startTime = str(datetime.datetime.now())[:-7]
     game = {
@@ -25,3 +25,7 @@ def create_game(player1, player2):
     }
     game_id = str(db.insert(game))
     return list(db.find({'_id':ObjectId(game_id)}))[0]
+"""
+
+def get_all_data():
+    return list(db.find())
