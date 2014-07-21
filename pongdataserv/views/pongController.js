@@ -3,7 +3,7 @@ var pongController = angular.module('pongController', ['ui.bootstrap']);
 
 pongController.controller('PongControl', ['$scope', '$http', '$q', 
     function PongControl($scope, $http, $q) {
-        $scope.base_url = 'http://ec2-54-186-165-220.us-west-2.compute.amazonaws.com:8086';
+        $scope.base_url = 'http://jacobra.com:8086';
 
         $scope.init = function(){
             $scope.get_all_data();
@@ -44,7 +44,7 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
  
             //Get the context of the canvas element we want to select
             var ctx = document.getElementById("pointPieChart").getContext("2d");
-            var pointpie = new Chart(ctx).Pie(data, {});
+            var pointpie = new Chart(ctx).Pie(data, { animation : false});
 
 
         }
@@ -96,8 +96,7 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
  
             //Get the context of the canvas element we want to select
             var ctx = document.getElementById("winPieChart").getContext("2d");
-            var winpie = new Chart(ctx).Pie(data, {});
-
+            var winpie = new Chart(ctx).Pie(data, { animation : false});
 
         }
     
@@ -114,10 +113,12 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
             var p1currscore = 0;
             var p2currscore = 0;
         
-            console.log(history);   
-     
             for (var i=0; i<history.length; i++){
-                rallies.push(String(i));
+                if (i%5 == 1){
+                    rallies.push(String(i));
+                } else {
+                    rallies.push("");
+                }
                 if (history[i]['point'] == p1){
                     p1currscore++;
                 }
@@ -128,44 +129,26 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
                 p2data.push(p2currscore);
             }
 
-            firstdraw = null;
-            seconddraw = null;
-            firstdrawtitle = null;
-            seconddrawtitle = null;
-            
-            if (game["winner"] == p1){
-                firstdraw = p1data; 
-                seconddraw = p2data;
-                firstdrawtitle = p1;
-                seconddrawtitle = p2;
-            }
-            else{
-                firstdraw = p2data; 
-                seconddraw = p1data;
-                firstdrawtitle = p2;
-                seconddrawtitle = p1;
-            }
             
 
             var data = {
                 labels : rallies,
                 datasets : [
                     {
-                        //fillColor : "rgba(220,220,220,0.5)",
-                        fillColor : "#faa",
-                        strokeColor : "#faa",
+                        fillColor : "rgba(255,100,100,0.3)",
                         pointColor : "#faa",
-                        pointStrokeColor : "#fff",
-                        data : firstdraw,
-                        title : firstdrawtitle
+                        strokeColor : "rgba(251,187,188,1)",
+                        pointStrokeColor : "#faa",
+                        data : p1data,
+                        title : $scope.p1
                     },
                     {
-                        fillColor : "rgba(151,187,205,0.5)",
-                        strokeColor : "rgba(151,187,205,1)",
-                        pointColor : "rgba(151,187,205,1)",
-                        pointStrokeColor : "#fff",
-                        data : seconddraw,
-                        title : seconddrawtitle
+                        fillColor : "rgba(111,117,255,0.3)",
+                        pointColor : "rgba(200,200,255,1)",
+                        strokeColor : "rgba(155,187,205,1)",
+                        pointStrokeColor : "#33f",
+                        data : p2data,
+                        title : $scope.p2
                     }
                 ]
             }
@@ -174,6 +157,7 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
                 scaleSteps : Math.max(p1currscore,p2currscore),
                 scaleStepWidth : 1,
                 scaleStartValue : 0,
+                animation : false,
             }
 
             var ctx = document.getElementById("gameLineChart").getContext("2d");
@@ -211,7 +195,7 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
         
         $scope.calculate_gamedates = function(){
             $scope.gamedates = [];
-            for (var i=0; i<$scope.alldata.length;i++){
+            for (var i=0; i<$scope.alldata.length; i++){
                 var game = $scope.alldata[i];
                 if ( game['game_over'] && game['player1'] == $scope.p1 && game['player2'] == $scope.p2){
                     $scope.gamedates.push(game['start_time']);
@@ -221,7 +205,24 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
             $scope.gamedate = $scope.gamedates[0];
         }
 
+        $scope.calculate_days = function(){
+            $scope.days = [];
+            for (var i=0; i<$scope.alldata.length;i++){
+                var game = $scope.alldata[i];
+                //get a list of unique days
+                var curr_day = game['start_time'].split(' ')[0];
+                if ($scope.days.indexOf(curr_day) == -1 &&
+                    game['game_over'] &&
+                    game['player1'] == $scope.p1 &&
+                    game['player2'] == $scope.p2){
+                        $scope.days.push(curr_day);
+                }
+            }
+            $scope.days.sort().reverse();
+        }
+
         $scope.generate_data_by_date = function(){
+            $scope.days = [];
             $scope.databydate = {};
             for (var i=0; i<$scope.alldata.length;i++){
                 var game = $scope.alldata[i];
@@ -229,13 +230,172 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
                     $scope.databydate[game['start_time']] = game;
                 }
             }
+            $scope.days.sort().reverse();
+        }
+
+        $scope.draw_day_charts = function(){
+            $scope.day_game_data = [];
+            for (var i=0; i<$scope.alldata.length; i++){
+                var currgame = $scope.alldata[i];
+                if (currgame['start_time'].indexOf($scope.day_stats) == 0 &&
+                    $scope.alldata[i]['player1'] == $scope.p1 &&
+                    $scope.alldata[i]['player2'] == $scope.p2){
+                        //console.log(currgame['start_time'] + ', '+ currgame['winner']); 
+                        $scope.day_game_data.push(currgame);
+                }
+
+            }
+
+            var p1 = $scope.p1;
+            var p2 = $scope.p2;
+
+            var wins = [0, 0, 0];
+            var points = [0, 0, 0];
+
+            for (var i = 0; i<$scope.day_game_data.length; i++){
+                if ( $scope.day_game_data[i]["game_over"] == true ){
+                    points[0] = points[0] + $scope.day_game_data[i][p1];
+                    points[1] = points[1] + $scope.day_game_data[i][p2];
+                    if ($scope.day_game_data[i]['winner'] == p1){
+                        wins[0]++;
+                    }
+                    else if ($scope.day_game_data[i]["winner"] == p2){
+                        wins[1]++;
+                    }
+                    else{
+                        wins[2]++;
+                    }
+                }
+            }
+
+            $scope.day_win_count = wins[0]+wins[1];
+            $scope.day_point_count = points[0]+points[1];
+            
+            var win_data = [
+                {
+                    value: wins[0],
+                    color:"#F38630",
+                    label: p1 + ": "+wins[0]
+                },
+                {
+                    value : wins[1],
+                    color : "#E0E4CC",
+                    label: p2 + ": "+wins[1]
+                },
+                {
+                    value : wins[2],
+                    color : "#69D2E7",
+                    label: "error" + ": "+wins[2]
+                }           
+            ]
+
+ 
+            //Get the context of the canvas element we want to select
+            var ctx = document.getElementById("dayWinPieChart").getContext("2d");
+            var daywinpie = new Chart(ctx).Pie(win_data, {animation : false});
+                
+            
+            var point_data = [
+                {
+                    value: points[0],
+                    color:"#F38630",
+                    label: p1 + ": "+points[0]
+                },
+                {
+                    value : points[1],
+                    color : "#E0E4CC",
+                    label: p2 + ": "+points[1]
+                },
+                {
+                    value : points[2],
+                    color : "#69D2E7",
+                    label: "error" + ": "+points[2]
+                }           
+            ]
+
+ 
+            //Get the context of the canvas element we want to select
+            var ctx = document.getElementById("dayPointPieChart").getContext("2d");
+            var daypointpie = new Chart(ctx).Pie(point_data, {animation : false});
+        }
+
+        $scope.draw_game_wins_over_time = function(){
+            var rallies = []
+            var p1wins = [];
+            var p2wins = [];
+            var p1currwins = 0;
+            var p2currwins = 0;
+
+            for (var i = 0; i<$scope.alldata.length; i++){
+                if ($scope.alldata[i]["game_over"] == true &&
+                    $scope.alldata[i]['player1'] == $scope.p1 &&
+                    $scope.alldata[i]['player2'] == $scope.p2){
+                    
+
+                    if ($scope.alldata[i]['winner'] == $scope.p1){
+                        p1currwins++;
+                    }
+                    else if ($scope.alldata[i]["winner"] == $scope.p2){
+                        p2currwins++;
+                    }
+                    p1wins.push(p1currwins);
+                    p2wins.push(p2currwins);
+                }
+
+            }
+
+            for (var i=0; i<(p1currwins+p2currwins); i++){
+                if (i%5 == 1){
+                    rallies.push(String(i));
+                } else {
+                    rallies.push("");
+                }
+            }
+
+            var data = {
+                labels : rallies,
+                datasets : [
+                    {
+                        fillColor : "rgba(151,187,205,0.3)",
+                        strokeColor : "rgba(151,187,205,1)",
+                        pointColor : "rgba(151,187,205,1)",
+                        pointStrokeColor : "#fff",
+                        data : p2wins,
+                        title : $scope.p2
+                    },
+                    {
+                        fillColor : "rgba(255,200,200,0.7)",
+                        //fillColor : "#faa",
+                        strokeColor : "#faa",
+                        pointColor : "#faa",
+                        pointStrokeColor : "#fff",
+                        data : p1wins,
+                        title : $scope.p1
+                    },
+                ]
+            }
+            options = {
+                scaleOverride : true,
+                scaleSteps : Math.max(p1currwins,p2currwins),
+                scaleStepWidth : 1,
+                scaleStartValue : 0,
+                animation : false,
+            }
+
+            var ctx = document.getElementById("gameWinsLineChart").getContext("2d");
+            legend(document.getElementById("gameWinsLineLegend"), data);
+            new Chart(ctx).Line(data,options);
+
         }
 
         $scope.redraw_graphs = function(){
+            $scope.calculate_days();
             $scope.calculate_gamedates();
             $scope.calculate_wins();
             $scope.calculate_points();
             $scope.draw_game_chart();
+            $scope.draw_day_charts();
+            $scope.draw_game_wins_over_time();
         }
 
         $scope.get_all_data = function(){
@@ -246,6 +406,7 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
                 $scope.generate_data_by_date();
                 $scope.generate_players();
                 $scope.redraw_graphs();
+                $scope.day_stats = $scope.days[0];
 
             }).
             error(function(data, status, headers, config) {
@@ -258,11 +419,16 @@ pongController.controller('PongControl', ['$scope', '$http', '$q',
         $scope.$watch('gamedate', function(){
             $scope.draw_game_chart();
         });
-
-        $scope.$watch('[p1,p2]', function(){
+        
+        $scope.$watch('[p1,p2,day_stats]', function(){
             if ($scope.p1 != $scope.p2){
+                $scope.generate_data_by_date();
                 $scope.redraw_graphs();    
             } 
+        }, true);
+        
+        $scope.$watch('[p1,p2]', function(){
+            $scope.day_stats = $scope.days[0];
         }, true);
     }]);
 
