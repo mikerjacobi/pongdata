@@ -2,5 +2,5 @@
 __version__ = '0.1'
 from bottle import Bottle, TEMPLATE_PATH
 app = Bottle()
-TEMPLATE_PATH.append("./pongdataserv/views/")
+TEMPLATE_PATH.append("./pongdataserv/js/")
 from pongdataserv.controllers import *

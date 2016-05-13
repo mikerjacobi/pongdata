@@ -27,3 +27,24 @@ def getalldata():
         data[i]['_id'] = str(data[i]['_id'])
     return json.dumps(data)
 
+@app.route('/')
+def static_html():
+    static_dir = 'pongdata/pongdataserv/html'
+    filename="index.html"
+    return static_file(filename, root=static_dir)
+
+@app.route('/html/<filename>')
+def static_html(filename):
+    static_dir = "pongdata/pongdataserv/%s"%"html"
+    return static_file(filename, root=static_dir)
+
+@app.route('/js/<filename>')
+def static_js(filename):
+    static_dir = "pongdata/pongdataserv/%s"%"js"
+    return static_file(filename, root=static_dir)
+	
+@app.route('/css/<filename>')
+def static_css(filename):
+    static_dir = "pongdata/pongdataserv/%s"%"css"
+    return static_file(filename, root=static_dir)
+
