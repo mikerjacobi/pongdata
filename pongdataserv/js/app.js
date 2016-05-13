@@ -7,7 +7,7 @@ pongApp.config(['$routeProvider',
   function($routeProvider) {
     $routeProvider.
       when('/', {
-          templateUrl: 'pongPage.html',
+          templateUrl: 'html/pongPage.html',
           controller: 'PongControl'
       }).
       otherwise({
